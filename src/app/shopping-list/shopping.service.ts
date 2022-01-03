@@ -5,23 +5,37 @@ import { Ingredient } from "../shared/ingredient.model";
 
 
 export class ShoppingListSerivce {
-    ingredientaChanged = new Subject<Ingredient[]>();
+    ingredientsChanged = new Subject<Ingredient[]>();
+    startedEditing = new Subject<number>();
     private ingredients: Ingredient[] = [
-        new Ingredient('car', 5),
-        new Ingredient('Moter', 10)
+        new Ingredient('Apple', 5),
+        new Ingredient('Orange', 10)
     ];
     getIngredients() {
         return this.ingredients.slice();
     }
+
+    getIngredient(index: number){
+        return this.ingredients[index];
+    } 
+
     addIngredient(ingredients: Ingredient) {
         this.ingredients.push(ingredients);
-        this.ingredientaChanged.next(this.ingredients.slice())
+        this.ingredientsChanged.next(this.ingredients.slice())
     }
     addIngredients(ingredients: Ingredient[]) {
         // for (let ingredient of ingredients) {
         //     this.addIngredient(ingredient);
         // }
         this.ingredients.push(...ingredients);
-        this.ingredientaChanged.next(this.ingredients.slice());
+        this.ingredientsChanged.next(this.ingredients.slice());
+    }
+    updateIngredient(index: number, newIngredient: Ingredient){
+        this.ingredients[index] = newIngredient;
+        this.ingredientsChanged.next(this.ingredients.slice());
+    }
+    deleteIngredient(index: number){
+        this.ingredients.splice(index, 1);
+        this.ingredientsChanged.next(this.ingredients.slice());
     }
 }
