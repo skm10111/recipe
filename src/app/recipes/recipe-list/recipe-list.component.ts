@@ -15,6 +15,7 @@ recipes!: Recipe[];
   constructor(private recipeService: RecipeService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
+    
     this.recipes = this.recipeService.getRecipes();
   }
   onNewRecipe(){
