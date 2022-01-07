@@ -1,7 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  ComponentFactoryResolver,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { AlertComponent } from '../shared/alert/alert.component';
+import { PlaceholderDirective } from '../shared/placeholder/placeholder.component';
 import { AuthResponseData, AuthService } from './auth.service';
 
 @Component({
@@ -9,12 +17,18 @@ import { AuthResponseData, AuthService } from './auth.service';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css'],
 })
-export class AuthComponent implements OnInit {
-  constructor(private authService: AuthService,
-              private router: Router) {}
+export class AuthComponent implements OnInit, OnDestroy {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private componentFactoryResolver: ComponentFactoryResolver
+  ) {}
+
+  @ViewChild(PlaceholderDirective) alertHost!: PlaceholderDirective;
   isLoginMode = true;
   isLoading = false;
   error: string = null as any;
+  private closeSub!: Subscription;
 
   onSwitchMode() {
     this.isLoginMode = !this.isLoginMode;
@@ -31,9 +45,9 @@ export class AuthComponent implements OnInit {
     let authObs: Observable<AuthResponseData>;
 
     if (this.isLoginMode) {
-      authObs= this.authService.login(email, password)
+      authObs = this.authService.login(email, password);
     } else {
-     authObs = this.authService.signup(email, password)
+      authObs = this.authService.signup(email, password);
     }
     authObs.subscribe(
       (resData) => {
@@ -43,6 +57,7 @@ export class AuthComponent implements OnInit {
       },
       (errorMessage) => {
         console.log(errorMessage);
+        this.showErrorAlert(errorMessage);
         this.error = errorMessage;
         this.isLoading = false;
       }
@@ -51,4 +66,29 @@ export class AuthComponent implements OnInit {
   }
 
   ngOnInit() {}
+  // onHandleError(){
+  //   this.error = null as any;
+  // }
+  private showErrorAlert(message: string) {
+    //const alertCmp = new AlertComponent();
+    const alertCmpFactory =
+      this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+    const hostViewContainerRef = this.alertHost;
+    hostViewContainerRef.viewContainerRef.clear();
+
+    const componentRef =
+      hostViewContainerRef.viewContainerRef.createComponent(alertCmpFactory);
+
+    componentRef.instance.message = message;
+    this.closeSub = componentRef.instance.close.subscribe(() => {
+      this.closeSub.unsubscribe();
+      hostViewContainerRef.viewContainerRef.clear();
+    });
+  }
+
+  ngOnDestroy() {
+    if(this.closeSub){
+      this.closeSub.unsubscribe();
+    }  
+  }
 }
